@@ -1,4 +1,6 @@
 import 'package:afroevent/models/event_models.dart';
+import 'package:afroevent/pages/share/navPage.dart';
+import 'package:afroevent/pages/user/profil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
@@ -21,26 +23,31 @@ class UserProfileWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          // Avatar circulaire
-          CircleAvatar(
-            radius: avatarSize,
-            backgroundImage: NetworkImage(
-              user.urlImage!=null ? user.urlImage! : "https://via.placeholder.com/150",
+      child: GestureDetector(
+        onTap: () {
+          goToPage(context, ProfilePage(userId: user.id!));
+        },
+        child: Row(
+          children: [
+            // Avatar circulaire
+            user.urlImage!=null? CircleAvatar(
+              radius: avatarSize,
+              backgroundImage: NetworkImage(
+                user.urlImage!=null ? user.urlImage! : "https://via.placeholder.com/150",
+              ),
+            ):Icon((Icons.person)),
+            const SizedBox(width: 5),
+            // Informations utilisateur
+            Text(
+              '@${user.pseudo!=null ? user.pseudo! : ""}',
+              style: TextStyle(
+                fontSize: textSize,
+                fontWeight: FontWeight.bold,
+                color: Colors.white
+              ),
             ),
-          ),
-          const SizedBox(width: 5),
-          // Informations utilisateur
-          Text(
-            '@${user.pseudo!=null ? user.pseudo! : "Nom Utilisateur"}',
-            style: TextStyle(
-              fontSize: textSize,
-              fontWeight: FontWeight.bold,
-              color: Colors.white
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

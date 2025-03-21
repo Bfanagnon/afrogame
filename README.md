@@ -1,6 +1,6 @@
 # afroevent
 
-application pour les evenement
+afrolook event
 
 ## Getting Started
 

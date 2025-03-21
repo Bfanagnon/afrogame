@@ -19,10 +19,12 @@ enum MediaType {
 
 enum TypeJeu {
   AlaUne,
-  Gbovian,
-  Match,
+  GAMESTORY,
+  EVENEMENT,
 }
 enum UserRole { ADM, USER }
+
+
 
 @JsonSerializable()
 class UserData {
@@ -35,6 +37,7 @@ class UserData {
   String? prenom;
   String? telephone;
   String? urlImage;
+  bool? isVerify=false;
   int? solde=0;
   double? note=0.1;
   String? adresse = "";

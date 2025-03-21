@@ -4,6 +4,7 @@ import 'package:afroevent/controllers/authController.dart';
 import 'package:afroevent/models/event_models.dart';
 import 'package:afroevent/pages/share/DateWidget.dart';
 import 'package:afroevent/pages/share/FonctionWidget.dart';
+import 'package:afroevent/pages/share/EventWidgetView.dart';
 import 'package:afroevent/pages/share/messageRequireWidget.dart';
 import 'package:afroevent/pages/share/messageView.dart';
 import 'package:afroevent/pages/share/navPage.dart';
@@ -29,8 +30,8 @@ class _AccueilPageState extends State<AccueilPage> {
   final Color accentColor = Color(0xFF81C784);
 
   List<EventData> _allEvents = [];
-  List<EventData> get _alaUneEvents => _allEvents.where((e) => e.categorie != "AlaUne").toList();
-  List<EventData> get _gameStories => _allEvents.where((e) => e.categorie != "AlaUne").toList();
+  List<EventData> get _alaUneEvents => _allEvents.where((e) => e.typeJeu == "EVENEMENT").toList();
+  List<EventData> get _gameStories => _allEvents.where((e) => e.typeJeu == "GAMESTORY").toList();
 
   @override
   void initState() {
@@ -48,10 +49,11 @@ class _AccueilPageState extends State<AccueilPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text('Sport News', style: TextStyle(color: Colors.white)),
         backgroundColor: primaryColor,
         elevation: 0,
-        actions: [UserProfileWidget(user: authController.userLogged)],
+        actions: [authController.userLogged==null?Icon((Icons.person)):UserProfileWidget(user: authController.userLogged)],
       ),
       body: RefreshIndicator(
         onRefresh:()async {
@@ -75,7 +77,7 @@ setState(() {
               slivers: [
                 _buildAlaUneSection(),
                 _textSection(),
-                _buildGameStoriesSection(),
+                _gameStories.isEmpty?_buildVideSection(): _buildGameStoriesSection(),
               ],
             );
           },
@@ -104,13 +106,14 @@ setState(() {
         children: [
           Padding(
             padding: EdgeInsets.all(16),
-            child: Text("À la Une", style: TextStyle(
+            // child: Text("À la Une", style: TextStyle(
+            child: Text("Événements", style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: primaryColor,
             )),
           ),
-          CarouselSlider(
+          _alaUneEvents.isEmpty?SizedBox.shrink(): CarouselSlider(
             items: _alaUneEvents.map((event) => _alaUneCard(event)).toList(),
             options: CarouselOptions(
               height: 200,
@@ -141,6 +144,14 @@ setState(() {
       ),
     );
   }
+  SliverList _buildVideSection() {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+            (context, index) => SizedBox.shrink(),
+        childCount: 0,
+      ),
+    );
+  }
 
   SliverList _buildGameStoriesSection() {
     return SliverList(
@@ -162,8 +173,8 @@ setState(() {
         ),
         child: Stack(
           children: [
-            _buildMediaPreview(event, height: 250),
-            _buildEventOverlay(event),
+            buildMediaPreview(event, height: 250),
+            buildEventOverlay(event),
           ],
         ),
       ),
@@ -180,168 +191,49 @@ setState(() {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildMediaPreview(event, height: 180),
-            _buildEventInfo(event),
+            buildMediaPreview(event, height: 180),
+            buildEventInfo(event),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMediaPreview(EventData event, {required double height}) {
-    final media = event.medias?.firstWhere(
-          (m) => m['type'] == 'image',
-      orElse: () => event.medias?.first ?? {},
-    );
-
-    if (media?['type'] == 'image') {
-      return ClipRRect(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-        child: Image.network(
-          media!['url']!,
-          height: height,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildVideoPreview(event, height),
-        ),
-      );
-    }
-    return _buildVideoPreview(event, height);
-  }
-
-  Widget _buildVideoPreview(EventData event, double height) {
-    final video = event.medias?.firstWhere(
-          (m) => m['type'] == 'video',
-      orElse: () => {},
-    );
-
-    if (video?.isEmpty ?? true) return SizedBox.shrink();
-
-    return FutureBuilder<Uint8List?>(
-      future: FlutterVideoThumbnailPlus.thumbnailData(
-        video: video!['url']!,
-        imageFormat: ImageFormat.jpeg,
-        maxWidth: 300,
-      ),
-      builder: (context, snapshot) {
-        return       GestureDetector(
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => DetailsEventPage(event: event),));
-          },
-          child: Container(
-            height: height,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-              image: snapshot.hasData
-                  ? DecorationImage(
-                  image: MemoryImage(snapshot.data!),
-                  fit: BoxFit.cover)
-                  : null,
-            ),
-            child: Center(
-              child: Icon(Icons.play_circle_filled,
-                  size: 50,
-                  color: Colors.white.withOpacity(0.8)),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildEventOverlay(EventData event) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(15)),
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: [Colors.black87, Colors.transparent],
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(event.titre ?? '',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.calendar_today, color: accentColor, size: 16),
-                SizedBox(width: 8),
-                DateWidget(dateInMicroseconds: event.date!),
-                Spacer(),
-                Icon(Icons.visibility, color: accentColor, size: 16),
-                SizedBox(width: 4),
-                Text('${event.vue}',
-                    style: TextStyle(color: Colors.white)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEventInfo(EventData event) {
-    return Padding(
-      padding: EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(event.titre ?? '',
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor)),
-          SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.sports, color: accentColor, size: 16),
-              SizedBox(width: 8),
-              Text(event.sousCategorie ?? '',
-                  style: TextStyle(color: Colors.grey[700])),
-              Spacer(),
-              DateWidget(dateInMicroseconds: event.date!),
-            ],
-          ),
-          SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.location_on, color: accentColor, size: 16),
-              SizedBox(width: 8),
-              Expanded(child: Text('${event.ville}, ${event.pays}',
-                  style: TextStyle(color: Colors.grey[700]))),
-              Icon(Icons.visibility, color: accentColor, size: 16),
-              SizedBox(width: 4),
-              Text('${event.vue}', style: TextStyle(color: Colors.grey[700])),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   void _handleEventTap(EventData event) async {
     if (authController.userLogged.id == null) {
-      showLoginRequiredDialog(context, () => Get.to(SimpleLoginScreen()));
+      showLoginRequiredDialog(context, () =>         Navigator.push(context, MaterialPageRoute(builder: (context) => SimpleLoginScreen(),)));;
       return;
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => DetailsEventPage(event: event),
-      ),
-    );
+    if(authController.userLogged.id!=null){
+      if(!isIdInList(authController.userLogged.id!,event.usersVues==null?[]:event.usersVues!)){
+        // authController.getEventById(event.id!).then((value) {
+        //   if(value!.usersVues!=null){
+        //     value!.usersVues!.add(authController.userLogged.id!);
+        //     authController.updateEvent(value);
+        //   }
+        // },);
+        // if(event.usersVues!=null){
+        //   event.usersVues!.add(authController.userLogged.id!);
+        //
+        // }
+
+      }
+      // event.vue=event.vue!+1;
+      // await authController.updateEvent(event).then((value) {
+      //   setState(() {
+      //
+      //   });
+      // },);
+
+      goToPage(context, DetailsEventPage(event: event!));
+    }else{
+      showLoginRequiredDialog(context, () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => SimpleLoginScreen(),));
+
+      },);
+    }
+
     //
     // await authController.markEventViewed(event);
     // Get.to(DetailsEventPage(event: event));

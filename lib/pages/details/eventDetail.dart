@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:afroevent/controllers/authController.dart';
 import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,12 @@ import 'package:flutter_video_thumbnail_plus/flutter_video_thumbnail_plus.dart';
 import 'package:video_player/video_player.dart';
 import 'package:get/get.dart';
 import '../../models/event_models.dart';
+import '../auth/login.dart';
 import '../share/DateWidget.dart';
+import '../share/EventWidgetView.dart';
+import '../share/FonctionWidget.dart';
+import '../share/LogoText.dart';
+import '../share/messageRequireWidget.dart';
 
 class DetailsEventPage extends StatefulWidget {
   final EventData event;
@@ -21,6 +27,7 @@ class DetailsEventPage extends StatefulWidget {
 class _DetailsEventPageState extends State<DetailsEventPage> {
   final Color primaryColor = Color(0xFF2E7D32);
   final Color accentColor = Color(0xFF81C784);
+  AuthController authController=Get.find();
   int _currentMediaIndex = 0;
   late CarouselSliderController  _carouselController;
   VideoPlayerController? _videoController;
@@ -29,6 +36,19 @@ class _DetailsEventPageState extends State<DetailsEventPage> {
   @override
   void initState() {
     super.initState();
+    authController.getEventById(widget.event.id!).then((value) {
+      if(value!.usersVues!=null){
+        widget.event.vue=widget.event.vue!+1;
+        value.vue=value.vue!+1;
+
+        value!.usersVues!.add(authController.userLogged.id!);
+         authController.updateEvent(value).then((value) {
+          setState(() {
+
+          });
+        },);
+      }
+    },);
     _carouselController = CarouselSliderController();
     _initializeVideoController(_currentMediaIndex);
   }
@@ -219,17 +239,23 @@ class _DetailsEventPageState extends State<DetailsEventPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: primaryColor,
-        iconTheme: IconThemeData(color: Colors.white),
-        // leading: IconButton(
-        //   icon: Icon(Icons.arrow_back, color: Colors.white),
-        //   onPressed: () => Get.back(),
-        // ),
+      appBar: AppBar(iconTheme: IconThemeData(color: Colors.green),
+        title: LogoText(),
+
+
         actions: [
           IconButton(
-            icon: Icon(Icons.share, color: Colors.white),
-            onPressed: () {/* Implémenter le partage */},
+            icon: Icon(Icons.more_horiz, color: Colors.green),
+            onPressed: () {
+              if(authController.userLogged.id==widget.event.userId||authController.userLogged.role==UserRole.ADM.name)
+{
+  showDialog(
+    context: context,
+    builder: (context) => EventMenuModal(event: widget.event),
+  );
+}
+
+            },
           ),
         ],
       ),
@@ -287,7 +313,27 @@ class _DetailsEventPageState extends State<DetailsEventPage> {
                       _buildInteractionButton(
                           Icons.remove_red_eye, '${widget.event.vue}', () {}),
                       _buildInteractionButton(
-                          Icons.favorite_border, '${widget.event.like}', () {}),
+                          Icons.favorite_border, '${widget.event.like}', () async {
+                        if(authController.userLogged.id!=null){
+                          if(!isIdInList(authController.userLogged.id!,widget.event.userslikes== null?[]:widget.event.userslikes!)){
+                            if(widget.event.userslikes!=null){
+                              widget.event.userslikes!.add(authController.userLogged.id!);
+
+                            }
+                            widget.event.like=widget.event.like!+1;
+                            await authController.updateEvent(widget.event);
+                            setState(() {
+
+                            });
+                          }
+
+                        }else{
+                          showLoginRequiredDialog(context, () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => SimpleLoginScreen(),));
+
+                          },);
+                        }
+                      }),
                       _buildInteractionButton(Icons.comment,
                           '${widget.event.commentaire}', () {}),
                     ],

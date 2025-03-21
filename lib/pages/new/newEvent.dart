@@ -28,13 +28,13 @@ class _NewEventPageState extends State<NewEventPage> {
   AuthController authController = Get.find();
 
   String selectedCategory = "Sport";
-  String typejeu = "Gbovian";
+  String typejeu = "EVENEMENT";
   String selectedSubCategory = "Basket";
   String selectedCountry = "Togo";
   String selectedCity = "Lomé";
 
   late List<String> categories = [];
-  final List<String> typesJeu = ["Gbovian", "Match", "Autre"];
+  final List<String> typesJeu = [ "EVENEMENT","GAMESTORY",];
   late Map<String, List<String>> subCategories = {};
 
   final List<String> countries = ["Togo", "Ghana", "Bénin"];
@@ -71,14 +71,14 @@ class _NewEventPageState extends State<NewEventPage> {
   @override
   void initState() {
     if (authController.userLogged.role == UserRole.ADM.name) {
-      categories = ["Sport", "Événement", "AlaUne"];
+      categories = ["Sport",];
       subCategories = {
         "Sport": ["Basket", "Football", "Autre"],
         "Événement": ["Concert", "Festival"],
         "AlaUne": ["Concert", "Festival", "Événement"],
       };
     } else {
-      categories = ["Sport", "Événement"];
+      categories = ["Sport"];
       subCategories = {
         "Sport": ["Basket", "Football"],
         "Événement": ["Concert", "Festival"],
@@ -290,6 +290,29 @@ class _NewEventPageState extends State<NewEventPage> {
     ..medias = medias;
 
     await postDetailsToFirestore(eventData);
+    String eventBasket="➡️🏀 Nouveau match de basketball à ${eventData.ville} ! Rejoins-nous et montre tes skills ! 🔥✨";
+    String eventFootball= "➡️⚽ Prépare tes crampons ! Match de football à ${eventData.ville} Viens et marque l'histoire ! 🥅⚡";
+    String eventOnlineGeneral = "➡️🎉 Un nouveau événement en ligne t'attend ! 📅 Rejoins-nous pour une expérience incroyable ! 🚀✨";
+
+    authController.getUsers().then((users) {
+      if(users.isNotEmpty){
+        List<String> listUserId=[];
+        for(var user in users){
+          listUserId.add(user.oneIgnalUserid!);
+
+        }
+        authController.sendNotification(
+            userIds: listUserId,
+            smallImage: authController.userLogged.urlImage!,
+            send_user_id: authController.userLogged.id!,
+            recever_user_id: "",
+            // eventData.categorie=="EVENEMENT"?eventOnlineGeneral:
+            message: eventData.sousCategorie=="Basket"?eventBasket:eventData.sousCategorie=="Football"?eventFootball:eventOnlineGeneral,
+            type_notif: "Annonce",
+            post_id: eventData.id!);
+      }
+
+    },);
 
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(

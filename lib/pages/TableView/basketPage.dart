@@ -3,7 +3,7 @@
 import 'dart:async';
 
 import 'package:afroevent/pages/TableView/basketTableView/basketGameStory.dart';
-import 'package:afroevent/pages/TableView/basketTableView/match.dart';
+import 'package:afroevent/pages/TableView/basketTableView/basketEvenement.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -42,18 +42,21 @@ class _BasketballPageState extends State<BasketballPage> {
         length: 2,
         child: Scaffold(
           appBar: AppBar(
+            automaticallyImplyLeading: false,
+
             title: TabBar(
               tabs: [
-                Tab(text: 'Gbovian'),
-                Tab(text: 'Match'),
+                Tab(text: 'Événements'),
+                Tab(text: 'Game Story'),
               ],
             ),
           ),
           body: TabBarView(
             children: [
+
+              Center(child: BasketEvenementPage()), // Page pour le basket-ball
               Center(child:BasketGameStoryPage()
               ), // Page pour le basket-ball
-              Center(child: BasketMatchPage()), // Page pour le basket-ball
             ],
           ),
         ),

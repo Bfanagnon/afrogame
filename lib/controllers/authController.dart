@@ -357,5 +357,39 @@ class AuthController extends GetxController {
 
   }
 
+  Future<EventData?> getEventById(String eventId) async {
+    try {
+      // Récupérer le document par son ID
+      DocumentSnapshot eventSnapshot = await FirebaseFirestore.instance
+          .collection('EventData')
+          .doc(eventId)
+          .get();
 
+      if (!eventSnapshot.exists) {
+        printVm("Aucun événement trouvé avec l'ID: $eventId");
+        return null;
+      }
+
+      // Convertir le document en EventData
+      EventData event = EventData.fromJson(eventSnapshot.data() as Map<String, dynamic>);
+
+      // Récupérer les données utilisateur associées
+      if (event.userId != null) {
+        QuerySnapshot userSnapshot = await FirebaseFirestore.instance
+            .collection('Users')
+            .where("id", isEqualTo: event.userId)
+            .get();
+
+        if (userSnapshot.docs.isNotEmpty) {
+          event.user = UserData.fromJson(userSnapshot.docs.first.data() as Map<String, dynamic>);
+        }
+      }
+
+      return event;
+
+    } catch (e) {
+      printVm("Erreur lors de la récupération de l'événement: ${e}");
+      return null;
+    }
+  }
 }

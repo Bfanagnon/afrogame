@@ -17,6 +17,7 @@ UserData _$UserDataFromJson(Map<String, dynamic> json) => UserData()
   ..prenom = json['prenom'] as String?
   ..telephone = json['telephone'] as String?
   ..urlImage = json['urlImage'] as String?
+  ..isVerify = json['isVerify'] as bool?
   ..solde = (json['solde'] as num?)?.toInt()
   ..note = (json['note'] as num?)?.toDouble()
   ..adresse = json['adresse'] as String?
@@ -35,6 +36,7 @@ Map<String, dynamic> _$UserDataToJson(UserData instance) => <String, dynamic>{
       'prenom': instance.prenom,
       'telephone': instance.telephone,
       'urlImage': instance.urlImage,
+      'isVerify': instance.isVerify,
       'solde': instance.solde,
       'note': instance.note,
       'adresse': instance.adresse,

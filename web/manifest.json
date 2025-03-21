@@ -3,9 +3,9 @@
     "short_name": "afroevent",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#hexcode",
-    "theme_color": "#hexcode",
-    "description": "application pour les evenement",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "afrolook event",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

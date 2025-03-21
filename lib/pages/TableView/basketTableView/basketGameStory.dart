@@ -6,10 +6,14 @@ import 'package:get/get.dart';
 
 import '../../../controllers/authController.dart';
 import '../../../models/event_models.dart';
+import '../../auth/login.dart';
 import '../../details/eventDetail.dart';
 import '../../share/DateWidget.dart';
 import '../../share/EventWidgetView.dart';
+import '../../share/FonctionWidget.dart';
+import '../../share/messageRequireWidget.dart';
 import '../../share/messageView.dart';
+import '../../share/navPage.dart';
 
 class BasketGameStoryPage extends StatefulWidget {
   @override
@@ -23,7 +27,6 @@ class _BasketGameStoryPageState extends State<BasketGameStoryPage> {
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
   }
 
   void _loadInitialData() {
@@ -40,38 +43,47 @@ class _BasketGameStoryPageState extends State<BasketGameStoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    return Scaffold(
-      body: StreamBuilder<List<EventData>>(
-        stream: _streamController.stream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Erreur de chargement'));
-          }
-          final events = snapshot.data ?? [];
-          final gbovianEvents = events.where((e) => e.typeJeu == TypeJeu.Gbovian.name).toList();
+    _loadInitialData();
 
-          return CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                title: Text('Game Story'),
-                floating: true,
-              ),
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                    final event = gbovianEvents[index];
-                    return _buildEventCard(event, size);
-                  },
-                  childCount: gbovianEvents.length,
+    final size = MediaQuery.of(context).size;
+    return RefreshIndicator(
+      onRefresh: () async{
+        _loadInitialData();
+
+      },
+      child: Scaffold(
+        body: StreamBuilder<List<EventData>>(
+          stream: _streamController.stream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text('Erreur de chargement'));
+            }
+            final events = snapshot.data ?? [];
+            // final gbovianEvents = events.where((e) => e.typeJeu == TypeJeu.GAMESTORY.name).toList();
+            final eventsDatas = events.where((e) => e.typeJeu == TypeJeu.GAMESTORY.name&&e.sousCategorie == 'Basket').toList();
+
+            return CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  title: Text('Game Story'),
+                  floating: true,
                 ),
-              ),
-            ],
-          );
-        },
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                      final event = eventsDatas[index];
+                      return _buildEventCard(event, size);
+                    },
+                    childCount: eventsDatas.length,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -117,13 +129,31 @@ class _BasketGameStoryPageState extends State<BasketGameStoryPage> {
 
   Widget _buildMediaSection(EventData event, Size size) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DetailsEventPage(event: event),
-          ),
-        );
+      onTap: () async {
+        if(authController.userLogged.id!=null){
+          // if(!isIdInList(authController.userLogged.id!,event.usersVues==null?[]:event.usersVues!)){
+          //
+          //   if(event.usersVues!=null){
+          //     event.usersVues!.add(authController.userLogged.id!);
+          //
+          //   }
+          //
+          // }
+          // event.vue=event.vue!+1;
+          // await authController.updateEvent(event).then((value) {
+          //   setState(() {
+          //
+          //   });
+          // },);
+
+          goToPage(context, DetailsEventPage(event: event!));
+        }else{
+          showLoginRequiredDialog(context, () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => SimpleLoginScreen(),));
+
+          },);
+        }
+
       },
       child: Container(
           height: size.height * 0.25,
@@ -131,10 +161,7 @@ class _BasketGameStoryPageState extends State<BasketGameStoryPage> {
           decoration: BoxDecoration(
           borderRadius: BorderRadius.vertical(top: Radius.circular(4))),
       child: event.medias.isNotEmpty
-      ? CachedNetworkImage(
-      imageUrl: event.medias.first['url']!,
-      fit: BoxFit.cover,
-      )
+      ? buildMediaPreview(event, height: 250)
           : Placeholder(),
       ),
     );
@@ -187,7 +214,26 @@ class _BasketGameStoryPageState extends State<BasketGameStoryPage> {
     );
   }
 
-  void _toggleLike(EventData event) {
+  Future<void> _toggleLike(EventData event) async {
+    if(authController.userLogged.id!=null){
+      if(!isIdInList(authController.userLogged.id!,event.userslikes== null?[]:event.userslikes!)){
+        if(event.userslikes!=null){
+          event.userslikes!.add(authController.userLogged.id!);
+
+        }
+        event.like=event.like!+1;
+        await authController.updateEvent(event);
+        setState(() {
+
+        });
+      }
+
+    }else {
+      showLoginRequiredDialog(context, () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => SimpleLoginScreen(),));
+      },);
+    }
     // authController.toggleEventLike(event.id!);
     // setState(() {
     //   event.isLiked = !event.isLiked;

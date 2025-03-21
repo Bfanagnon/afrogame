@@ -1,6 +1,18 @@
 
 
+import 'dart:async';
+
+import 'package:afroevent/pages/TableView/basketTableView/basketGameStory.dart';
+import 'package:afroevent/pages/TableView/basketTableView/basketEvenement.dart';
+import 'package:afroevent/pages/TableView/footballTableView/footballEvenement.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../controllers/authController.dart';
+import '../../models/event_models.dart';
+import '../share/EventWidgetView.dart';
+import '../share/messageView.dart';
+import 'footballTableView/footballGameStory.dart';
 
 class FootballPage extends StatefulWidget {
   @override
@@ -8,24 +20,47 @@ class FootballPage extends StatefulWidget {
 }
 
 class _FootballPageState extends State<FootballPage> {
+  AuthController authController=Get.find();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: TabBar(
-            tabs: [
-              Tab(text: 'Gbovian'),
-              Tab(text: 'Match'),
+    return RefreshIndicator(
+      onRefresh: ()async {
+
+      },
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+
+            title: TabBar(
+              tabs: [
+                Tab(text: 'Événements'),
+                Tab(text: 'Game Story'),
+              ],
+            ),
+          ),
+          body: TabBarView(
+            children: [
+
+              Center(child: FootballEvenementPage()), // Page pour le basket-ball
+              Center(child:FootballGameStoryPage()
+              ), // Page pour le basket-ball
             ],
           ),
-        ),
-        body: TabBarView(
-          children: [
-            Center(child: Container(child: Text("Gbovian"),)), // Page pour le basket-ball
-            Center(child: Container(child: Text("Match"),)), // Page pour le basket-ball
-          ],
         ),
       ),
     );
